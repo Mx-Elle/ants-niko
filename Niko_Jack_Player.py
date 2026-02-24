@@ -11,7 +11,7 @@ AntMove = tuple[tuple[int, int], tuple[int, int]]
 
 def valid_neighbors(
     row: int, col: int, walls: npt.NDArray[np.int_]
-) -> list[tuple[int, int]]:
+) -> list[Vector]:
     if len(walls.shape) != 2:
         return []
     return [n for n in neighbors((row, col), walls.shape) if not walls[n]]
@@ -58,7 +58,7 @@ class Player:
     ) -> set[AntMove]:
 
         bot_ants: set[Point] = set()
-        bot_ant_moves: set[tuple[Point, list[Vector]]] = set()
+        bot_ant_legal_moves: set[tuple[Point, list[Vector]]] = set()
         bot_hills: set[Point] = set()
         visible_food: set[Point] = set()
         visible_enemy_ants: set[Point] = set()
@@ -68,16 +68,16 @@ class Player:
         for coord, kind in vision:  # get all locations for each type
             if kind == Entity.FRIENDLY_ANT:
                 bot_ants.add(coord)
-                bot_ant_moves.add((coord, valid_neighbors(coord[0], coord[1], self.walls)))
-            if kind == Entity.ENEMY_ANT:
+                bot_ant_legal_moves.add((coord, valid_neighbors(coord[0], coord[1], self.walls)))
+            elif kind == Entity.ENEMY_ANT:
                 visible_enemy_ants.add(coord)
-            if kind == Entity.FOOD:
+            elif kind == Entity.FOOD:
                 visible_food.add(coord)
-            if kind == Entity.FRIENDLY_HILL:
+            elif kind == Entity.FRIENDLY_HILL:
                 bot_hills.add(coord)
-            if kind == Entity.ENEMY_HILL:
+            elif kind == Entity.ENEMY_HILL:
                 enemy_hill.add(coord)
 
-
+        
 
         return set()
