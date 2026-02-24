@@ -1,3 +1,4 @@
+from enum import Enum
 from queue import Queue
 import numpy as np
 import numpy.typing as npt
@@ -7,6 +8,12 @@ from board import Board, Entity, toroidal_distance_2, neighbors
 Point = tuple[int, int]
 Vector = Point # Just going to use this to make sure I know which are points and which are movement vectors
 AntMove = tuple[tuple[int, int], tuple[int, int]]
+
+class Goal(Enum):
+
+    GET_FOOD = 1
+    ATTACK = 2
+    DEFEND = 3
 
 
 def valid_neighbors(
@@ -63,6 +70,8 @@ class Player:
         visible_food: set[Point] = set()
         visible_enemy_ants: set[Point] = set()
         enemy_hill: set[Point] = set()
+        
+        ant_moves: set[AntMove] = set()
 
 
         for coord, kind in vision:  # get all locations for each type
@@ -78,6 +87,10 @@ class Player:
             elif kind == Entity.ENEMY_HILL:
                 enemy_hill.add(coord)
 
+        # decide what ants go where
+
+        for ant_loc, legal_moves in bot_ant_legal_moves:
+            ...
         
 
-        return set()
+        return ant_moves
