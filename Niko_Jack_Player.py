@@ -1,3 +1,4 @@
+from copy import deepcopy
 from enum import Enum
 from queue import Queue
 import numpy as np
@@ -6,8 +7,9 @@ import numpy.typing as npt
 from board import Board, Entity, toroidal_distance_2, neighbors
 
 Point = tuple[int, int]
-Vector = Point # Just going to use this to make sure I know which are points and which are movement vectors
+Vector = Point  # Just going to use this to make sure I know which are points and which are movement vectors
 AntMove = tuple[tuple[int, int], tuple[int, int]]
+
 
 class Goal(Enum):
 
@@ -16,12 +18,11 @@ class Goal(Enum):
     DEFEND = 3
 
 
-def valid_neighbors(
-    row: int, col: int, walls: npt.NDArray[np.int_]
-) -> list[Vector]:
+def valid_neighbors(row: int, col: int, walls: npt.NDArray[np.int_]) -> list[Vector]:
     if len(walls.shape) != 2:
         return []
     return [n for n in neighbors((row, col), walls.shape) if not walls[n]]
+
 
 class Player:
     """
@@ -47,7 +48,10 @@ class Player:
         max_turns: int,
         time_per_turn: float,
     ) -> None:
+
         self.walls = walls
+        self.places_to_go = deepcopy(walls)
+        self.places_to_go[self.places_to_go == 1] = -float("inf")
         self.harvest_radius = harvest_radius
         self.vision_radius = vision_radius
         self.battle_radius = battle_radius
@@ -61,7 +65,7 @@ class Player:
     def move_ants(
         self,
         vision: set[tuple[tuple[int, int], Entity]],
-        stored_food: int, 
+        stored_food: int,
     ) -> set[AntMove]:
 
         bot_ants: set[Point] = set()
@@ -70,20 +74,27 @@ class Player:
         visible_food: set[Point] = set()
         visible_enemy_ants: set[Point] = set()
         enemy_hill: set[Point] = set()
-        
+
         ant_moves: set[AntMove] = set()
 
-
         for coord, kind in vision:  # get all locations for each type
+
             if kind == Entity.FRIENDLY_ANT:
                 bot_ants.add(coord)
-                bot_ant_legal_moves.add((coord, valid_neighbors(coord[0], coord[1], self.walls)))
+                bot_ant_legal_moves.add(
+                    (coord, valid_neighbors(coord[0], coord[1], self.walls))
+                )
+
             elif kind == Entity.ENEMY_ANT:
                 visible_enemy_ants.add(coord)
+
             elif kind == Entity.FOOD:
                 visible_food.add(coord)
+
             elif kind == Entity.FRIENDLY_HILL:
                 bot_hills.add(coord)
+                self.places_to_go[coord] = -float("inf")
+
             elif kind == Entity.ENEMY_HILL:
                 enemy_hill.add(coord)
 
@@ -91,6 +102,5 @@ class Player:
 
         for ant_loc, legal_moves in bot_ant_legal_moves:
             ...
-        
 
         return ant_moves
