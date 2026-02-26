@@ -9,5 +9,7 @@ of all moves that a bot can make...
 - attack as large mass to not lose numbers
 ## defend
 - create blockades around our hills
+    - potentially have \# of ants protecting each hill as time goes on
+    - either as one large mass around hill or expand a ring outward near entry points
 - create barriers between large masses of enemy ants and strategic points
--- strategic points may be regions with a lot of food access or navigationally significant points
+    - strategic points may be regions with a lot of food access or navigationally significant points
