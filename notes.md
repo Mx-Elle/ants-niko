@@ -16,7 +16,8 @@ of all moves that a bot can make...
     - either as one large mass around hill or expand a ring outward near entry points
 - create barriers between large masses of enemy ants and strategic points
     - strategic points may be regions with a lot of food access or navigationally significant points
-<hr>
+---
+
 # theories
 - create blocks to make it so that enemy ants have to go through our ants to get to our hills
 - choke points will probably be important
