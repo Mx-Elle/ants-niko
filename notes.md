@@ -23,3 +23,22 @@ of all moves that a bot can make...
 - choke points will probably be important
 - blocking choke points will require less ants than protecting open space
 - the larger of a ring we have, the more safe and easily accesible food we will have
+
+---
+# implementation
+## food grabber
+food grabber v1 got stuck a lot\
+most ants ended with random move\
+sometimes ants were able to grab large mass of food if close enough to capture one square\
+new implentation:
+- get all food locations
+- get all ant locations
+- find closest ants to each food
+    - for each ant iterate through foods to get nearest food and then iterate through that
+    - *or* for each food iterate through ants to get nearest ant
+    - both ideas require iteration through both food and ants... is there a better way?
+- assign directions based off closest ant to each food
+- once all food are assigned an ant, make the ants others explore
+    - how am i going to create an exploring type ant?
+    - does the walls array allow me to infer the dimensions of the map?
+    - if i can get a sense of the map from the walls array, i should be able think of an exploring technique
