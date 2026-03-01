@@ -15,6 +15,7 @@ from dataclasses import dataclass
 
 from random_player import RandomBot
 from food_grabber_v1 import FoodBot
+from food_grabber_v2 import FoodBot2
 
 AntMove = tuple[tuple[int, int], tuple[int, int]]
 
@@ -72,7 +73,7 @@ def play_game(
     visualize: bool = True,
 ):
     pygame.init()
-    screen = pygame.display.set_mode((1000, 1000))
+    screen = pygame.display.set_mode((1000, 1000), pygame.RESIZABLE)
 
     p1, p2 = p1_type(
         deepcopy(spec.board.walls),
@@ -302,7 +303,7 @@ def harvest(board: Board, collect_radius: int, food: dict[int, int]) -> None:
 def main():
     b = generate_board(60, 60, hills_per_player=3)
     spec = GameSpecification(b)
-    play_game(spec, FoodBot, RandomBot)
+    play_game(spec, FoodBot, FoodBot2)
 
 
 if __name__ == "__main__":

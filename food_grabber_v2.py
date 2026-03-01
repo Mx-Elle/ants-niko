@@ -1,6 +1,5 @@
-import random
-
 from board import Entity, neighbors, cells_within_distance, toroidal_distance_2
+import random
 import numpy as np
 import numpy.typing as npt
 import heapq
@@ -20,12 +19,12 @@ AntMove = tuple[AntPosition, AntDestination]
 
 def valid_neighbors(
     row: int, col: int, walls: npt.NDArray[np.int_]
-) -> list[tuple[int, int]]:
+) -> list[Point]:
     """
     empty spaces around a cell
 
     :return: neighbors without walls
-    :rtype: list[tuple[int, int]]
+    :rtype: list[Point]
     """
     return [n for n in neighbors((row, col), walls.shape) if not walls[n]]
 
@@ -54,7 +53,17 @@ def dist(a: Point, b: Point, walls: npt.NDArray[np.int_]) -> float:
     """wrapper for board dist"""
     return toroidal_distance_2(a, b, walls.shape)
 
-class FoodBot:
+def move_towards_dest(
+    a: Point, b: Point, walls: npt.NDArray[np.int_]
+) -> Point:
+    neighbors = valid_neighbors(a[0], a[1], walls)
+    q: list[tuple] = list()
+    for n in neighbors:
+        heapq.heappush(q, (dist(n, b, walls), n))
+    return heapq.heappop(q)[1]
+
+
+class FoodBot2:
 
     def __init__(
         self,
@@ -72,9 +81,11 @@ class FoodBot:
         self.max_turns = max_turns
         self.time_per_turn = time_per_turn
 
+        self.run_count = 1
+
     @property
     def name(self):
-        return "food grabber 1"
+        return "food grabber 2"
 
     def process_vision(
         self, vision: set[tuple[Point, Entity]]
@@ -118,14 +129,52 @@ class FoodBot:
         enemy_hills = pv[Entity.ENEMY_HILL]
         my_ants = pv[Entity.FRIENDLY_ANT]
         enemy_ants = pv[Entity.ENEMY_ANT]
-        food = pv[Entity.FOOD]
+        foods = pv[Entity.FOOD]
 
-        harvest_cells = cells_within_radius(food, self.collect_radius, self.walls)
+        # cells from which food can be harvested (includes walls)
+        harvest_cells = cells_within_radius(foods, self.collect_radius, self.walls)
         cells_in_view = cells_within_radius(my_ants, self.vision_radius, self.walls)
 
-        claimed_destinations = my_hills
+        claimed_destinations: set[Point] = my_hills
+        claimed_ants: set[Point] = set()
 
-        for ant in my_ants:
+        food_and_ant: dict[Point, list[tuple[float, Point]]]= dict()
+        food_ant_q: list[tuple] = list()
+
+        for food in foods:
+            food_and_ant[food] = list()
+            for ant in my_ants:
+                heapq.heappush(food_and_ant[food], (
+                    dist(ant, food, self.walls),
+                    ant
+                ))
+            dis, ant = heapq.heappop(food_and_ant[food])
+            heapq.heappush(food_ant_q, (
+                dis,
+                food,
+                ant
+            ))
+
+        while food_ant_q:
+            dis, food, ant = heapq.heappop(food_ant_q)
+            if ant in claimed_ants:
+                if food_and_ant[food]:
+                    dis, ant2 = heapq.heappop(food_and_ant[food])
+                    heapq.heappush(food_ant_q, (
+                        dis,
+                        food,
+                        ant2
+                    ))
+            else:
+                dest = move_towards_dest(ant, food, self.walls)
+                claimed_ants.add(ant)
+                claimed_destinations.add(dest)
+                out.add((ant, dest))
+
+
+        unc_ant_count = 0
+        for ant in (my_ants - claimed_ants):
+            unc_ant_count += 1
             valid_dests = {
                 v
                 for v in valid_neighbors(*ant, self.walls)
@@ -137,37 +186,12 @@ class FoodBot:
                 claimed_destinations.add(ant)
                 continue
 
-
-            # get food if adjacent
-            moves_with_harvest = valid_dests & harvest_cells
-            if moves_with_harvest:
-                dest = moves_with_harvest.pop()
-                claimed_destinations.add(dest)
-                out.add((ant, dest))
-                continue
-
-            # go towards food if in vision
-            ant_vision = cells_within_radius(ant, self.vision_radius, self.walls)
-            unc_food_in_vision = (ant_vision & food) - claimed_destinations
-
-            if unc_food_in_vision:
-                foods: list[tuple[float, Point]] = []
-                for loc in unc_food_in_vision:
-                    heapq.heappush(foods, (dist(ant, loc, self.walls), loc))
-                _, closest_food = heapq.heappop(foods)
-
-                moves: list[tuple[float, Point]] = []
-                for move in valid_dests:
-                    heapq.heappush(moves, (dist(move, closest_food, self.walls), move))
-                _, dest = heapq.heappop(moves)
-                claimed_destinations.add(dest)
-                out.add((ant, dest))
-                continue
-
             dest = random.choice(list(valid_dests))
             claimed_destinations.add(dest)
             out.add((ant, dest))
 
+
+        print(f"v2 unclaimed ants: {unc_ant_count}")
         end = monotonic()
-        print(f"v1 move time {round(((end - start) / self.time_per_turn) * 100, 3)}%")
+        print(f"v2 move time {round(((end - start) / self.time_per_turn) * 100, 3)}%")
         return out
