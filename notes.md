@@ -49,3 +49,5 @@ might dijkstra map can be used for ant to food or food to ant...
 travel towards their goal using a bellman-ford\
 this would allow the food cells to have a very negative weight and influence
 ants to pick up food on their way to a goal
+... on second thought this might be uneccesary and could proabably still be acheived with a dijkstra map
+walls can be weighted infinity, empty cells can be wieghted 5, food can be 0, etc.
