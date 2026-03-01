@@ -61,4 +61,8 @@ and assign each ant to one gradient\
 dijkstra map is next on my list\
 should also figure out how to implement protection rings\
 need to bias unclaimed bots to explore open area or take control 
-of open area in a mass
+of open area in a mass\
+\
+[dijkstra map](https://www.roguebasin.com/index.php/The_Incredible_Power_of_Dijkstra_Maps)
+[d m visualizied](https://www.roguebasin.com/index.php/Dijkstra_Maps_Visualized)
+[tower defense](https://www.redblobgames.com/pathfinding/tower-defense/)
