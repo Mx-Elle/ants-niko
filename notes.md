@@ -42,25 +42,18 @@ new implentation:
     - how am i going to create an exploring type ant?
     - does the walls array allow me to infer the dimensions of the map?
     - if i can get a sense of the map from the walls array, i should be able think of an exploring technique
-\
-\
+
 might dijkstra map can be used for ant to food or food to ant...
 **but** it might be more beneficial to have attacking or defending ants
 travel towards their goal using a bellman-ford\
-
 this would allow the food cells to have a very negative weight and influence
 ants to pick up food on their way to a goal\
-
 ... on second thought this might be uneccesary and could proabably 
 still be acheived with a dijkstra map\
-
 walls can be weighted infinity, empty cells can be wieghted 5, food can be 0, etc.\
-
 hmmmm. maybe the optimal way to set this up would be to have some kind of a gradient field 
 influenced by all goals. like potential energy and a ball rolling down a hill.\
-
 this implementation might trap a bunch of ants, but we could proably assign 
 some ants to be uninfluenced by the surface\
-
 alternatively, we could set up 3 different gradients ->  one for each goal 
 and assign each ant to one gradient
