@@ -42,3 +42,10 @@ new implentation:
     - how am i going to create an exploring type ant?
     - does the walls array allow me to infer the dimensions of the map?
     - if i can get a sense of the map from the walls array, i should be able think of an exploring technique
+\
+\
+might dijkstra map can be used for ant to food or food to ant...
+**but** it might be more beneficial to have attacking or defending ants
+travel towards their goal using a bellman-ford\
+this would allow the food cells to have a very negative weight and influence
+ants to pick up food on their way to a goal
