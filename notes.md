@@ -56,4 +56,9 @@ influenced by all goals. like potential energy and a ball rolling down a hill.\
 this implementation might trap a bunch of ants, but we could proably assign 
 some ants to be uninfluenced by the surface\
 alternatively, we could set up 3 different gradients ->  one for each goal 
-and assign each ant to one gradient
+and assign each ant to one gradient\
+\
+dijkstra map is next on my list\
+should also figure out how to implement protection rings\
+need to bias unclaimed bots to explore open area or take control 
+of open area in a mass
