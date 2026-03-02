@@ -107,11 +107,7 @@ class FoodBot2:
 
         for item in vision:
             coord, entity = item
-            # pesky type warning appears when
-            # trying to do next three lines in one
-            coords = result[entity]
-            coords.add(coord)
-            result[entity] = coords
+            result[entity].add(coord)
         return result
 
     def move_ants(
