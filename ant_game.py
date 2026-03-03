@@ -119,10 +119,10 @@ def play_game(
         p1_hill_count = len(set(zip(*np.where(board.hills == 1))))
         p2_hill_count = len(set(zip(*np.where(board.hills == 2))))
         if p1_hill_count == 0:
-            print(f"Blue {p1.name} wins by destroying all opposing hills")
+            print(f"Blue {p2.name} wins by destroying all opposing hills")
             return
         if p2_hill_count == 0:
-            print(f"Red {p2.name} wins by destroying all opposing hills")
+            print(f"Red {p1.name} wins by destroying all opposing hills")
             return
     p1_hill_count = len(set(zip(*np.where(board.hills == 1))))
     p2_hill_count = len(set(zip(*np.where(board.hills == 2))))
