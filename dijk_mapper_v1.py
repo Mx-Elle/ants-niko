@@ -65,7 +65,7 @@ def move_towards_dest(
     return heapq.heappop(q)[1]
 
 
-class FoodBot2:
+class DijkBot:
 
     def __init__(
         self,
@@ -84,13 +84,22 @@ class FoodBot2:
         self.time_per_turn = time_per_turn
 
         self.previous_ants: set[Point]
-        # to compare the ants to find who died
-        # previous - current_ants = dead ants
+        self.dead_ants: set[Point]
         self.run_count = 1
+        self.d_map: npt.NDArray[np.float32] = self.walls.copy().astype(np.float32)
+        self.walls_init = False
+
+        self.my_hills: set[Point]
+        self.enemy_hills: set[Point]
+        self.my_ants: set[Point]
+        self.enemy_ants: set[Point]
+        self.foods: set[Point]
+        self.harvest_cells: set[Point]
+        self.cells_in_view: set[Point]
 
     @property
     def name(self):
-        return "food grabber 2"
+        return "dijkstra mapper 1"
 
     class Job(Enum):
         Food = 1,
@@ -100,13 +109,10 @@ class FoodBot2:
 
     def process_vision(
         self, vision: set[tuple[Point, Entity]]
-    ) -> dict[Entity, set[Point]]:
+    ) -> None:
         """
-        process vision set and return dict with coords for each entity\n
+        process vision set and updates vision instance vars\n
         loops through vision set once
-
-        :return: dict with entity keys and coords as values
-        :rtype: dict[Entity, set[Point]]
         """
         result: dict[Entity, set[Point]] = {
             Entity.FRIENDLY_HILL: set(),
@@ -119,7 +125,44 @@ class FoodBot2:
         for item in vision:
             coord, entity = item
             result[entity].add(coord)
-        return result
+
+        self.my_hills = result[Entity.FRIENDLY_HILL]
+        self.enemy_hills = result[Entity.ENEMY_HILL]
+        self.my_ants = result[Entity.FRIENDLY_ANT]
+        self.enemy_ants = result[Entity.ENEMY_ANT]
+        self.foods = result[Entity.FOOD]
+
+        # kills ants during vision processing
+        self.kill_ants(self.my_ants)
+
+        self.harvest_cells = cells_within_radius(self.foods, self.collect_radius, self.walls)
+        self.cells_in_view = cells_within_radius(self.my_ants, self.vision_radius, self.walls)
+
+        return
+
+
+    def kill_ants(self, curr_ants: set[Point]) -> None:
+        """updates dead_ants set with ants that just died"""
+        self.dead_ants = self.previous_ants - curr_ants
+        return
+
+    def create_dijk_map(self) -> None:
+        if not self.walls_init:
+            # make walls inf on first run
+            for wall in np.nonzero(self.d_map):
+                self.d_map[wall] = np.inf
+            self.walls_init = True
+
+        # make enemy ant death radius inf
+        death_radius: set[Point] = cells_within_radius(
+            self.enemy_ants,
+            self.battle_radius,
+            self.walls
+        )
+        for death in death_radius:
+            self.d_map[death] = np.inf
+
+
 
     def move_ants(
         self,
@@ -129,28 +172,17 @@ class FoodBot2:
         start = monotonic()
         out = set()
 
-        # pv for processed vision
-        pv = self.process_vision(vision)
+        self.process_vision(vision)
 
-        my_hills = pv[Entity.FRIENDLY_HILL]
-        enemy_hills = pv[Entity.ENEMY_HILL]
-        my_ants = pv[Entity.FRIENDLY_ANT]
-        enemy_ants = pv[Entity.ENEMY_ANT]
-        foods = pv[Entity.FOOD]
-
-        # cells from which food can be harvested (includes walls)
-        harvest_cells = cells_within_radius(foods, self.collect_radius, self.walls)
-        cells_in_view = cells_within_radius(my_ants, self.vision_radius, self.walls)
-
-        claimed_destinations: set[Point] = my_hills
+        claimed_destinations: set[Point] = self.my_hills
         claimed_ants: set[Point] = set()
 
         food_and_ant: dict[Point, list[tuple[float, Point]]]= dict()
         food_ant_q: list[tuple] = list()
 
-        for food in foods:
+        for food in self.foods:
             food_and_ant[food] = list()
-            for ant in my_ants:
+            for ant in self.my_ants:
                 heapq.heappush(food_and_ant[food], (
                     dist(ant, food, self.walls),
                     ant
@@ -176,11 +208,12 @@ class FoodBot2:
                 dest = move_towards_dest(ant, food, self.walls)
                 claimed_ants.add(ant)
                 claimed_destinations.add(dest)
+                self.previous_ants.add(dest)
                 out.add((ant, dest))
 
 
         unc_ant_count = 0
-        for ant in (my_ants - claimed_ants):
+        for ant in (self.my_ants - claimed_ants):
             unc_ant_count += 1
             valid_dests = {
                 v
@@ -195,6 +228,7 @@ class FoodBot2:
 
             dest = random.choice(list(valid_dests))
             claimed_destinations.add(dest)
+            self.previous_ants.add(dest)
             out.add((ant, dest))
 
 
