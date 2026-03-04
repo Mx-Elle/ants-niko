@@ -35,6 +35,11 @@ def create_map(array: np.ndarray):
     return array
 
 array = np.zeros((5,5))
-array[1::2, 3] = -1
-array[0,0] = float('inf')
-print(create_map(array))
+coords = [(2,3), (4,4)]
+
+array[tuple(zip(*coords))] = 100
+print(array)
+array[coords] = 50
+print(array)
+# array[0,0] = float('inf')
+# print(create_map(array))

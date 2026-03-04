@@ -2,6 +2,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 import numbers
 import sys
+import time
 from time import monotonic
 from typing import Protocol, Type
 
@@ -15,7 +16,8 @@ from dataclasses import dataclass
 
 from random_player import RandomBot
 from food_grabber_v1 import FoodBot
-from food_grabber_v2 import FoodBot2
+from dijk_mapper_v0 import FoodBot2
+from dijk_mapper_v1_origninal import DijkBot
 
 AntMove = tuple[tuple[int, int], tuple[int, int]]
 
