@@ -13,6 +13,7 @@ import pygame.locals
 from tqdm import trange
 from board import Board, Entity, cells_within_distance, generate_board
 from dataclasses import dataclass
+import traceback
 
 from random_player import RandomBot
 from food_grabber_v1 import FoodBot
@@ -172,6 +173,7 @@ def run_players(
     try:
         p1_moves = p1.move_ants(board.get_vision(1, spec.vision_radius), food[1])
     except:
+        print(traceback.format_exc())
         p1_moves = set()
     p1_time = monotonic() - start
     if p1_time > spec.time_per_turn:
@@ -180,6 +182,7 @@ def run_players(
     try:
         p2_moves = p2.move_ants(board.get_vision(2, spec.vision_radius), food[2])
     except:
+        print(traceback.format_exc())
         p2_moves = set()
     p2_time = monotonic() - start
     if p2_time > spec.time_per_turn:

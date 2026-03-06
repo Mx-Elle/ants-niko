@@ -206,6 +206,7 @@ class DijkBot1:
         exploring = True
         changed = False
         while exploring:
+            changed = False
             to_explore = self.floor_cells - self.assigned_cells
 
             while to_explore:
