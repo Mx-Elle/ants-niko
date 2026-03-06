@@ -100,6 +100,7 @@ class DijkBot1:
         self.foods: set[Point]
         self.harvest_cells: set[Point]
         self.cells_in_view: set[Point]
+        self.run_count = 0
 
     @property
     def name(self):
@@ -212,6 +213,10 @@ class DijkBot1:
             self.battle_radius,
             self.walls
         )
+        if len(self.my_ants) >= 200:
+            attack_hill = list(self.enemy_hills)[0]
+            self.d_map[attack_hill] = -999
+            heapq.heappush(goals, (-999, attack_hill))
 
         # fill rest of map
         while goals:
@@ -272,6 +277,8 @@ class DijkBot1:
             else:
                 self.claimed_destinations.add(move[1])
                 out.add(move)
+
+        self.run_count += 1
 
 
         end = monotonic()
