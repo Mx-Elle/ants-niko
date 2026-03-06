@@ -5,6 +5,7 @@ import sys
 import time
 from time import monotonic
 from typing import Protocol, Type
+import traceback
 
 import numpy as np
 import numpy.typing as npt
@@ -15,9 +16,10 @@ from board import Board, Entity, cells_within_distance, generate_board
 from dataclasses import dataclass
 
 from random_player import RandomBot
+# from new_save import Bot
 from food_grabber_v1 import FoodBot
 from dijk_mapper_v0 import FoodBot2
-from dijk_mapper_v1_origninal import DijkBot
+from neural_network import Bot
 
 AntMove = tuple[tuple[int, int], tuple[int, int]]
 
@@ -74,8 +76,9 @@ def play_game(
     p2_type: Type[Player],
     visualize: bool = True,
 ):
-    pygame.init()
-    screen = pygame.display.set_mode((1000, 1000), pygame.RESIZABLE)
+    if visualize:
+        pygame.init()
+        screen = pygame.display.set_mode((1000, 1000), pygame.RESIZABLE)
 
     p1, p2 = p1_type(
         deepcopy(spec.board.walls),
@@ -96,11 +99,12 @@ def play_game(
     p1_hills = {h: 0 for h in zip(*np.where(board.hills == 1))}
     p2_hills = {h: 0 for h in zip(*np.where(board.hills == 2))}
     food = {1: len(p1_hills), 2: len(p2_hills)}
-    for _ in trange(spec.max_turns):
-        for event in pygame.event.get():
-            if event.type == pygame.locals.QUIT:
-                pygame.quit()
-                sys.exit()
+    for _ in trange(spec.max_turns, disable=True):
+        if visualize:
+            for event in pygame.event.get():
+                if event.type == pygame.locals.QUIT:
+                    pygame.quit()
+                    sys.exit()
 
         spawn_ants(board, food, p1_hills, p2_hills)
         try:
@@ -124,10 +128,10 @@ def play_game(
         p2_hill_count = len(set(zip(*np.where(board.hills == 2))))
         if p1_hill_count == 0:
             print(f"Blue {p2.name} wins by destroying all opposing hills")
-            return
+
         if p2_hill_count == 0:
             print(f"Red {p1.name} wins by destroying all opposing hills")
-            return
+
     p1_hill_count = len(set(zip(*np.where(board.hills == 1))))
     p2_hill_count = len(set(zip(*np.where(board.hills == 2))))
     if p1_hill_count > p2_hill_count:
@@ -147,6 +151,14 @@ def play_game(
             print(f"Blue {p2.name} wins on score. ({p2_score} to {p1_score})")
         else:
             print(f"Drawn game!")
+
+    p1_score = food[1] + len(set(zip(*np.where(board.ants == 1))))
+    p2_score = food[2] + len(set(zip(*np.where(board.ants == 2))))
+
+    return {
+        "p1": (p1_hill_count) + (10 * p1_score) - (100 * p2_hill_count) - (5 * p2_score),
+        "p2": (p2_hill_count) + (10 * p2_score) - (100 * p2_hill_count)  - (5 * p1_score),
+    }
 
 
 def validate(move: AntMove) -> bool:
@@ -172,7 +184,8 @@ def run_players(
     start = monotonic()
     try:
         p1_moves = p1.move_ants(board.get_vision(1, spec.vision_radius), food[1])
-    except:
+    except Exception as e:
+        traceback.print_exc()
         p1_moves = set()
     p1_time = monotonic() - start
     if p1_time > spec.time_per_turn:
@@ -304,8 +317,8 @@ def harvest(board: Board, collect_radius: int, food: dict[int, int]) -> None:
 
 def main():
     b = generate_board(60, 60, hills_per_player=2)
-    spec = GameSpecification(b)
-    play_game(spec, FoodBot, FoodBot2)
+    spec = GameSpecification(b, max_turns=1000)
+    play_game(spec, Bot, RandomBot)
 
 
 if __name__ == "__main__":
