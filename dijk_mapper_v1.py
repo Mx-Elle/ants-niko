@@ -187,7 +187,6 @@ class DijkBot1:
             heapq.heappush(goals, (-50, food))
 
         # reset assigned cells after ants have moved
-        self.assigned_cells = self.permanent_cells.copy()
 
         if self.floor_cells:
             r, c = zip(*self.floor_cells)
@@ -199,28 +198,28 @@ class DijkBot1:
             self.d_map[cell] = 5
             heapq.heappush(goals, (5, cell))
 
+        for cell in self.enemy_hills:
+            self.d_map[cell] = -30
+            heapq.heappush(goals, (-30, cell))
+
         # for cell in self.floor_cells - self.cells_in_view:
         #     self.d_map[cell] = 0
         #     # assigned_cells.add(cell) unsure about this?
 
-        # make enemy ant death radius inf
+        # make enemy ant death radius
         death_radius: set[Point] = cells_within_radius(
             self.enemy_ants,
             self.battle_radius,
             self.walls
         )
-        
-        # self.d_map[list(death_radius)] = np.inf
-        # self.assigned_cells = self.assigned_cells | death_radius
-        
-        # for death in death_radius:
-        #     self.d_map[death] = np.inf
-        #     self.assigned_cells.add(death)
 
         # fill rest of map
         while goals:
             dist, cell = heapq.heappop(goals)
-            if dist > self.d_map[cell]:
+            w = 0
+            if cell in death_radius:
+                w = 10
+            if (dist + w) > self.d_map[cell]:
                 continue
 
             neighbors = valid_neighbors(cell[0], cell[1], self.walls)
