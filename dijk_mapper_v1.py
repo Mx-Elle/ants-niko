@@ -65,7 +65,7 @@ def move_towards_dest(
     return heapq.heappop(q)[1]
 
 
-class DijkBot:
+class DijkBot1:
 
     def __init__(
         self,
@@ -83,11 +83,15 @@ class DijkBot:
         self.max_turns = max_turns
         self.time_per_turn = time_per_turn
 
-        self.previous_ants: set[Point]
-        self.dead_ants: set[Point]
-        self.run_count = 1
+        self.previous_ants: set[Point] = set()
+        # self.dead_ants: set[Point]
         self.d_map: npt.NDArray[np.float32] = self.walls.copy().astype(np.float32)
-        self.walls_init = False
+        self.walls_coords: set[Point] = set()
+        self.floor_cells: set[Point] = set()
+        self.map_init = False
+        self.claimed_destinations = set()
+        self.assigned_cells: set[Point] = set()
+        self.permanent_cells: set[Point] = set()
 
         self.my_hills: set[Point]
         self.enemy_hills: set[Point]
@@ -138,8 +142,9 @@ class DijkBot:
         self.harvest_cells = cells_within_radius(self.foods, self.collect_radius, self.walls)
         self.cells_in_view = cells_within_radius(self.my_ants, self.vision_radius, self.walls)
 
-        return
+        self.create_dijk_map()
 
+        return
 
     def kill_ants(self, curr_ants: set[Point]) -> None:
         """updates dead_ants set with ants that just died"""
@@ -147,11 +152,41 @@ class DijkBot:
         return
 
     def create_dijk_map(self) -> None:
-        if not self.walls_init:
-            # make walls inf on first run
-            for wall in np.nonzero(self.d_map):
-                self.d_map[wall] = np.inf
-            self.walls_init = True
+        if not self.map_init:
+
+            wall_list = list(zip(*np.nonzero(self.d_map)))
+            not_wall_list = list(zip(*np.nonzero(self.d_map == 0)))
+
+            for wall in wall_list:
+                self.walls_coords.add(wall)
+
+            for not_wall in not_wall_list:
+                self.floor_cells.add(not_wall)
+
+
+            self.permanent_cells = self.permanent_cells | self.walls_coords
+            self.permanent_cells = self.permanent_cells | self.my_hills
+            self.permanent_cells = self.permanent_cells | self.foods
+
+            self.map_init = True
+
+        self.d_map = self.walls.copy().astype(np.float32)
+
+        self.d_map[list(self.walls_coords)] = np.inf
+        self.d_map[list(self.my_hills)] = np.inf
+        self.d_map[list(self.foods)] = -50
+
+        # reset assigned cells after ants have moved
+        self.assigned_cells = self.permanent_cells
+
+        self.d_map[list(self.floor_cells)] = 999
+
+        # make unseen cells low
+        self.d_map[list(self.floor_cells - self.cells_in_view)] = 0
+
+        # for cell in self.floor_cells - self.cells_in_view:
+        #     self.d_map[cell] = 0
+        #     # assigned_cells.add(cell) unsure about this?
 
         # make enemy ant death radius inf
         death_radius: set[Point] = cells_within_radius(
@@ -159,8 +194,60 @@ class DijkBot:
             self.battle_radius,
             self.walls
         )
-        for death in death_radius:
-            self.d_map[death] = np.inf
+
+        self.d_map[list(death_radius)] = np.inf
+        self.assigned_cells = self.assigned_cells | death_radius
+        
+        # for death in death_radius:
+        #     self.d_map[death] = np.inf
+        #     self.assigned_cells.add(death)
+
+        # fill rest of map
+        exploring = True
+        changed = False
+        while exploring:
+            to_explore = self.floor_cells - self.assigned_cells
+
+            while to_explore:
+                cell = to_explore.pop()
+                cell_val = self.d_map[cell]
+
+                n_vals: list[tuple] = list()
+                neighbors = valid_neighbors(cell[0], cell[1], self.walls)
+                tie = 1
+                for n in neighbors:
+                    heapq.heappush(n_vals, (
+                        self.d_map[n],
+                        tie,
+                        n
+                    ))
+                    tie += 1
+                min_val, _, _ = heapq.heappop(n_vals)
+                if cell_val > min_val + 1:
+                    self.d_map[cell] = min_val + 1
+                    changed = True
+
+            if changed == False:
+                exploring = False
+
+    def dijk_move(self, current: Point) -> AntMove | None:
+        n_vals: list[tuple] = list()
+        tie = 1
+        for n in valid_neighbors(current[0], current[1], self.walls):
+            if n not in self.claimed_destinations:
+                heapq.heappush(n_vals, (
+                    self.d_map[n],
+                    tie,
+                    n
+                ))
+                tie += 1
+        if n_vals:
+            _, _, dest = heapq.heappop(n_vals)
+            return (current, dest)
+
+        else:
+            return None
+
 
 
 
@@ -170,69 +257,21 @@ class DijkBot:
         stored_food: int,
     ) -> set[AntMove]:
         start = monotonic()
-        out = set()
+        out: set[AntMove] = set()
 
         self.process_vision(vision)
 
-        claimed_destinations: set[Point] = self.my_hills
-        claimed_ants: set[Point] = set()
+        self.claimed_destinations: set[Point] = set()
 
-        food_and_ant: dict[Point, list[tuple[float, Point]]]= dict()
-        food_ant_q: list[tuple] = list()
-
-        for food in self.foods:
-            food_and_ant[food] = list()
-            for ant in self.my_ants:
-                heapq.heappush(food_and_ant[food], (
-                    dist(ant, food, self.walls),
-                    ant
-                ))
-            dis, ant = heapq.heappop(food_and_ant[food])
-            heapq.heappush(food_ant_q, (
-                dis,
-                food,
-                ant
-            ))
-
-        while food_ant_q:
-            dis, food, ant = heapq.heappop(food_ant_q)
-            if ant in claimed_ants:
-                if food_and_ant[food]:
-                    dis, ant2 = heapq.heappop(food_and_ant[food])
-                    heapq.heappush(food_ant_q, (
-                        dis,
-                        food,
-                        ant2
-                    ))
+        for ant in self.my_ants:
+            move = self.dijk_move(ant)
+            if move == None:
+                self.claimed_destinations.add(ant)
             else:
-                dest = move_towards_dest(ant, food, self.walls)
-                claimed_ants.add(ant)
-                claimed_destinations.add(dest)
-                self.previous_ants.add(dest)
-                out.add((ant, dest))
+                self.claimed_destinations.add(ant)
+                out.add(move)
 
 
-        unc_ant_count = 0
-        for ant in (self.my_ants - claimed_ants):
-            unc_ant_count += 1
-            valid_dests = {
-                v
-                for v in valid_neighbors(*ant, self.walls)
-                if v not in claimed_destinations
-            }
-
-            if not valid_dests:
-                # if no possible moves stay still
-                claimed_destinations.add(ant)
-                continue
-
-            dest = random.choice(list(valid_dests))
-            claimed_destinations.add(dest)
-            self.previous_ants.add(dest)
-            out.add((ant, dest))
-
-
-        print(f"v2 unclaimed ants: {unc_ant_count}")
         end = monotonic()
-        print(f"v2 move time {round(((end - start) / self.time_per_turn) * 100, 3)}%")
+        # print(f"v2 move time {round(((end - start) / self.time_per_turn) * 100, 3)}%")
         return out

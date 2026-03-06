@@ -16,8 +16,7 @@ from dataclasses import dataclass
 
 from random_player import RandomBot
 from food_grabber_v1 import FoodBot
-from dijk_mapper_v0 import FoodBot2
-from dijk_mapper_v1_origninal import DijkBot
+from dijk_mapper_v1 import DijkBot1
 
 AntMove = tuple[tuple[int, int], tuple[int, int]]
 
@@ -305,7 +304,7 @@ def harvest(board: Board, collect_radius: int, food: dict[int, int]) -> None:
 def main():
     b = generate_board(60, 60, hills_per_player=2)
     spec = GameSpecification(b)
-    play_game(spec, FoodBot, FoodBot2)
+    play_game(spec, DijkBot1, DijkBot1)
 
 
 if __name__ == "__main__":
