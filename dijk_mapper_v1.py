@@ -106,9 +106,9 @@ class DijkBot1:
         return "dijkstra mapper 1"
 
     class Job(Enum):
-        Food = 1,
-        Defend = 2,
-        Attack = 3,
+        Food = 1
+        Defend = 2
+        Attack = 3
         DefendHill = 4
 
     def process_vision(
@@ -149,6 +149,7 @@ class DijkBot1:
     def kill_ants(self, curr_ants: set[Point]) -> None:
         """updates dead_ants set with ants that just died"""
         self.dead_ants = self.previous_ants - curr_ants
+        self.previous_ants = curr_ants.copy()
         return
 
     def create_dijk_map(self) -> None:
@@ -177,7 +178,7 @@ class DijkBot1:
         self.d_map[list(self.foods)] = -50
 
         # reset assigned cells after ants have moved
-        self.assigned_cells = self.permanent_cells
+        self.assigned_cells = self.permanent_cells.copy()
 
         self.d_map[list(self.floor_cells)] = 999
 
