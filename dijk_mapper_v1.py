@@ -173,17 +173,30 @@ class DijkBot1:
 
         self.d_map = self.walls.copy().astype(np.float32)
 
-        self.d_map[list(self.walls_coords)] = np.inf
-        self.d_map[list(self.my_hills)] = np.inf
-        self.d_map[list(self.foods)] = -50
+        if self.walls_coords:
+            r, c = zip(*self.walls_coords)
+            self.d_map[r, c] = np.inf
+
+        if self.my_hills:
+            r, c = zip(*self.my_hills)
+            self.d_map[r, c] = np.inf
+
+        if self.foods:
+            r, c = zip(*self.foods)
+            self.d_map[r, c] = -50
 
         # reset assigned cells after ants have moved
         self.assigned_cells = self.permanent_cells.copy()
 
-        self.d_map[list(self.floor_cells)] = 999
+        if self.floor_cells:
+            r, c = zip(*self.floor_cells)
+            self.d_map[r, c] = 999
+
 
         # make unseen cells low
-        self.d_map[list(self.floor_cells - self.cells_in_view)] = 0
+        if self.floor_cells and self.cells_in_view:
+            r, c = zip(*(self.floor_cells - self.cells_in_view))
+            self.d_map[r, c] = 0
 
         # for cell in self.floor_cells - self.cells_in_view:
         #     self.d_map[cell] = 0
@@ -195,9 +208,9 @@ class DijkBot1:
             self.battle_radius,
             self.walls
         )
-
-        self.d_map[list(death_radius)] = np.inf
-        self.assigned_cells = self.assigned_cells | death_radius
+        
+        # self.d_map[list(death_radius)] = np.inf
+        # self.assigned_cells = self.assigned_cells | death_radius
         
         # for death in death_radius:
         #     self.d_map[death] = np.inf
