@@ -196,7 +196,7 @@ class DijkBot1:
         # make unseen cells low
         if self.floor_cells and self.cells_in_view:
             r, c = zip(*(self.floor_cells - self.cells_in_view))
-            self.d_map[r, c] = 0
+            self.d_map[r, c] = 5
 
         # for cell in self.floor_cells - self.cells_in_view:
         #     self.d_map[cell] = 0
@@ -233,11 +233,12 @@ class DijkBot1:
                 for n in neighbors:
                     heapq.heappush(n_vals, (
                         self.d_map[n],
+                        random.random(),
                         tie,
                         n
                     ))
                     tie += 1
-                min_val, _, _ = heapq.heappop(n_vals)
+                min_val, _, _, _ = heapq.heappop(n_vals)
                 if cell_val > min_val + 1:
                     self.d_map[cell] = min_val + 1
                     changed = True
@@ -252,12 +253,13 @@ class DijkBot1:
             if n not in self.claimed_destinations:
                 heapq.heappush(n_vals, (
                     self.d_map[n],
+                    random.random(),
                     tie,
                     n
                 ))
                 tie += 1
         if n_vals:
-            _, _, dest = heapq.heappop(n_vals)
+            _, _, _, dest = heapq.heappop(n_vals)
             return (current, dest)
 
         else:
