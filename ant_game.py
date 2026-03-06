@@ -17,7 +17,8 @@ import traceback
 
 from random_player import RandomBot
 from food_grabber_v1 import FoodBot
-from dijk_mapper_v1 import DijkBot1
+from Niko_Jack_Bot import DijkBot1
+
 
 AntMove = tuple[tuple[int, int], tuple[int, int]]
 

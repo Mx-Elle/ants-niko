@@ -179,10 +179,6 @@ class DijkBot1:
             r, c = zip(*self.walls_coords)
             self.d_map[r, c] = np.inf
 
-        if self.my_hills:
-            r, c = zip(*self.my_hills)
-            self.d_map[r, c] = np.inf
-
         for food in self.foods:
             self.d_map[food] = -50
             heapq.heappush(goals, (-50, food))
@@ -200,8 +196,8 @@ class DijkBot1:
             heapq.heappush(goals, (5, cell))
 
         for cell in self.enemy_hills:
-            self.d_map[cell] = -30
-            heapq.heappush(goals, (-30, cell))
+            self.d_map[cell] = -40
+            heapq.heappush(goals, (-40, cell))
 
         # for cell in self.floor_cells - self.cells_in_view:
         #     self.d_map[cell] = 0
@@ -213,10 +209,24 @@ class DijkBot1:
             self.battle_radius,
             self.walls
         )
-        if len(self.my_ants) >= 200:
+        if len(self.my_ants) >= 150:
             attack_hill = list(self.enemy_hills)[0]
             self.d_map[attack_hill] = -999
             heapq.heappush(goals, (-999, attack_hill))
+
+        being_attacked = -8
+        for cell in cells_within_radius(
+            self.my_hills,
+            10,
+            self.walls
+        ): 
+            if cell in death_radius:
+                being_attacked = -100
+        
+        for hill in self.my_hills:
+            self.d_map[hill] = being_attacked
+            heapq.heappush(goals, (being_attacked, hill))
+
 
         # fill rest of map
         while goals:
@@ -233,6 +243,8 @@ class DijkBot1:
                 if new_cost < self.d_map[n]:
                     self.d_map[n] = new_cost
                     heapq.heappush(goals, (new_cost, n))
+        for hill in self.my_hills:
+            self.d_map[hill] = np.inf
 
 
 
