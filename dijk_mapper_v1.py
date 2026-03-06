@@ -268,7 +268,7 @@ class DijkBot1:
             if move == None:
                 self.claimed_destinations.add(ant)
             else:
-                self.claimed_destinations.add(ant)
+                self.claimed_destinations.add(move[1])
                 out.add(move)
 
 
