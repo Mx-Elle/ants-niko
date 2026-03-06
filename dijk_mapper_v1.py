@@ -172,6 +172,7 @@ class DijkBot1:
             self.map_init = True
 
         self.d_map = self.walls.copy().astype(np.float32)
+        goals = []
 
         if self.walls_coords:
             r, c = zip(*self.walls_coords)
@@ -181,9 +182,9 @@ class DijkBot1:
             r, c = zip(*self.my_hills)
             self.d_map[r, c] = np.inf
 
-        if self.foods:
-            r, c = zip(*self.foods)
-            self.d_map[r, c] = -50
+        for food in self.foods:
+            self.d_map[food] = -50
+            heapq.heappush(goals, (-50, food))
 
         # reset assigned cells after ants have moved
         self.assigned_cells = self.permanent_cells.copy()
@@ -194,9 +195,9 @@ class DijkBot1:
 
 
         # make unseen cells low
-        if self.floor_cells and self.cells_in_view:
-            r, c = zip(*(self.floor_cells - self.cells_in_view))
-            self.d_map[r, c] = 5
+        for cell in (self.floor_cells - self.cells_in_view):
+            self.d_map[cell] = 5
+            heapq.heappush(goals, (5, cell))
 
         # for cell in self.floor_cells - self.cells_in_view:
         #     self.d_map[cell] = 0
@@ -217,34 +218,19 @@ class DijkBot1:
         #     self.assigned_cells.add(death)
 
         # fill rest of map
-        exploring = True
-        changed = False
-        while exploring:
-            changed = False
-            to_explore = self.floor_cells - self.assigned_cells
+        while goals:
+            dist, cell = heapq.heappop(goals)
+            if dist > self.d_map[cell]:
+                continue
 
-            while to_explore:
-                cell = to_explore.pop()
-                cell_val = self.d_map[cell]
+            neighbors = valid_neighbors(cell[0], cell[1], self.walls)
+            for n in neighbors:
+                new_cost = dist + 1
+                if new_cost < self.d_map[n]:
+                    self.d_map[n] = new_cost
+                    heapq.heappush(goals, (new_cost, n))
 
-                n_vals: list[tuple] = list()
-                neighbors = valid_neighbors(cell[0], cell[1], self.walls)
-                tie = 1
-                for n in neighbors:
-                    heapq.heappush(n_vals, (
-                        self.d_map[n],
-                        random.random(),
-                        tie,
-                        n
-                    ))
-                    tie += 1
-                min_val, _, _, _ = heapq.heappop(n_vals)
-                if cell_val > min_val + 1:
-                    self.d_map[cell] = min_val + 1
-                    changed = True
 
-            if changed == False:
-                exploring = False
 
     def dijk_move(self, current: Point) -> AntMove | None:
         n_vals: list[tuple] = list()
