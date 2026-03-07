@@ -213,19 +213,10 @@ class DijkBot1:
             attack_hill = list(self.enemy_hills)[0]
             self.d_map[attack_hill] = -999
             heapq.heappush(goals, (-999, attack_hill))
-
-        being_attacked = -8
-        for cell in cells_within_radius(
-            self.my_hills,
-            10,
-            self.walls
-        ): 
-            if cell in death_radius:
-                being_attacked = -100
         
         for hill in self.my_hills:
-            self.d_map[hill] = being_attacked
-            heapq.heappush(goals, (being_attacked, hill))
+            self.d_map[hill] = -8
+            heapq.heappush(goals, (-8, hill))
 
 
         # fill rest of map

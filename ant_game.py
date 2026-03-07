@@ -16,7 +16,6 @@ from dataclasses import dataclass
 import traceback
 
 from random_player import RandomBot
-from food_grabber_v1 import FoodBot
 from Niko_Jack_Bot import DijkBot1
 
 
@@ -308,7 +307,7 @@ def harvest(board: Board, collect_radius: int, food: dict[int, int]) -> None:
 def main():
     b = generate_board(60, 60, hills_per_player=2)
     spec = GameSpecification(b)
-    play_game(spec, DijkBot1, DijkBot1)
+    play_game(spec, DijkBot1, RandomBot)
 
 
 if __name__ == "__main__":
